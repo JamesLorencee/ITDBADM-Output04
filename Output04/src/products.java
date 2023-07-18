@@ -6,8 +6,13 @@ public class products {
     public int      customerNumber;
     public String   requiredDate;
 
-    // Order Details
+    // Orders Table
     public String   orderNumber;
+    public String   orderDate;
+    public String   shippedDate;
+    public String   status;
+    public String   comments;
+    
 
     public String   productCode;
     public String   productName;
@@ -139,7 +144,7 @@ public class products {
     // c. Retrieve Info about the Order --- SKELETON CODE ---
     public int retrieveOrderInfo() {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter Order ID");
+        System.out.println("Enter Order Number:");
         orderNumber = sc.nextLine();
 
         try{
@@ -149,15 +154,36 @@ public class products {
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
 
-            // PreparedStatement pstmt = conn.prepareStatement("");
-            // pstmt.setString(1, productCode);
+            // PreparedStatement pstmt = conn.prepareStatement("SELECT orderNumber, orderDate, requiredDate, shippedDate, status, comments, customerNumber FROM orders WHERE orderNumber=?");
+            pstmt.setInt(1, orderNumber);
 
             System.out.println("Press enter key to start retrieving Order Details");
             sc.nextLine();
             
-            // ResultSet rs = pstmt.executeQuery();  
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                orderDate           = rs.getString("orderDate");
+                requiredDate        = rs.getString("requiredDate");
+                shippedDate         = rs.getString("shippedDate");
+                status              = rs.getString("status");
+                comments            = rs.getString("comments");
+                customerNumber      = rs.getInt("customerNumber");
 
-            // pstmt.close();
+            }
+            rs.close();
+
+            System.out.println("Order Date:            " + orderDate);
+            System.out.println("Required Date:         " + requiredDate);
+            System.out.println("Shipped Date:          " + orderDate); 
+            System.out.println("Status:                " + status);
+            System.out.println("Comments:              " + comments);
+            System.out.println("Customer Number:       " + customerNumber); 
+
+            System.out.println("Press enter key to end transaction");
+            sc.nextLine();
+
+            pstmt.close();
             conn.commit();
             conn.close();
             return 1;
