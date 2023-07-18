@@ -5,6 +5,10 @@ public class products {
    
     public int      customerNumber;
     public String   requiredDate;
+
+    // Order Details
+    public String   orderNumber;
+
     public String   productCode;
     public String   productName;
     public String   productLine;
@@ -15,6 +19,7 @@ public class products {
   
     public products() {}
     
+    //b. Inquire for Products
     public int getInfo()     {
         Scanner sc = new Scanner(System.in);
         System.out.println("Enter Product Code:");
@@ -67,6 +72,8 @@ public class products {
             return 0;
         }
     }
+
+    // Not Needed
     public int updateInfo() {
         
         float   incr;
@@ -129,11 +136,30 @@ public class products {
         }        
     }
 
-    // c. Retrieve Info about the Order
-    public int retrieveInfo() {
+    // c. Retrieve Info about the Order --- SKELETON CODE ---
+    public int retrieveOrderInfo() {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Order ID");
+        orderNumber = sc.nextLine();
 
         try{
+            Connection conn; 
+            // Change password every PULL !!
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
+            System.out.println("Connection Successful");
+            conn.setAutoCommit(false);
 
+            // PreparedStatement pstmt = conn.prepareStatement("");
+            // pstmt.setString(1, productCode);
+
+            System.out.println("Press enter key to start retrieving Order Details");
+            sc.nextLine();
+            
+            // ResultSet rs = pstmt.executeQuery();  
+
+            // pstmt.close();
+            conn.commit();
+            conn.close();
             return 1;
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -141,7 +167,7 @@ public class products {
         }
      }
 
-    //d. Cancel order
+    //d. Cancel order --- SKELETON CODE --- 
     public int cancelOrder(){
         try{
             
@@ -157,12 +183,12 @@ public class products {
         Scanner sc     = new Scanner (System.in);
         int     choice = 0;
         // Letting the use choose between the two functions
-        System.out.println("Enter [1] Get product Info  [2] Update Product [3] Retrieve Info  [4] Cancel Order");
+        System.out.println("Enter [1] Get product Info  [2] Order Product [3] Retrieve Info  [4] Cancel Order");
         choice = sc.nextInt();
         products p = new products();
         if (choice==1) p.getInfo();
-        if (choice==2) p.updateInfo();
-        // if (choice==3) p.retrieveInfo();
+        // if (choice==2) p.orderProduct();
+        if (choice==3) p.retrieveOrderInfo();
         // if (choice==4) p.cancelOrder();
         
         System.out.println("Press enter key to continue....");
