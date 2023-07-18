@@ -22,6 +22,7 @@ public class products {
         
         try {
             Connection conn; 
+            // Change password every PULL !!
             conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
@@ -75,6 +76,7 @@ public class products {
         
         try {
             Connection conn; 
+            // Change password every PULL !!
             conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
