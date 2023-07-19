@@ -194,7 +194,7 @@ public class products {
             if (shippedDate != null){
                 System.out.println("Shipped Date:     " + shippedDate); 
             }else{
-                System.out.println("Shipped Date:     N/A"); 
+                System.out.println("Shipped Date:     -"); 
             }
 
             System.out.println("Status:           " + status);
@@ -202,7 +202,7 @@ public class products {
             if (comments != null){
                 System.out.println("Comments:         " + comments);
             }else{
-                System.out.println("Comments:         N/A");
+                System.out.println("Comments:         -");
             }
 
             System.out.println("Customer Number:  " + customerNumber); 
