@@ -192,34 +192,34 @@ public class products {
             System.out.println("Required Date:    " + requiredDate);
 
             if (shippedDate != null){
-            System.out.println("Shipped Date:     " + shippedDate); 
+                System.out.println("Shipped Date:     " + shippedDate); 
             }else{
-            System.out.println("Shipped Date:     N/A"); 
+                System.out.println("Shipped Date:     N/A"); 
             }
 
             System.out.println("Status:           " + status);
 
             if (comments != null){
-            System.out.println("Comments:         " + comments);
+                System.out.println("Comments:         " + comments);
             }else{
-            System.out.println("Comments:         N/A");
+                System.out.println("Comments:         N/A");
             }
 
             System.out.println("Customer Number:  " + customerNumber); 
             System.out.println("----------------------------------------");
 
-            PreparedStatement ordetails = conn.prepareStatement("SELECT od.productCode, p.productName, od.quantityOrdered, od.priceEach, od.orderLineNumber FROM orderdetails od JOIN products p ON p.productCode = od.productCode WHERE od.orderNumber=? ORDER BY od.orderLineNumber LOCK IN SHARE MODE;");
-            ordetails.setInt(1, orderNumber);
+            pstmt = conn.prepareStatement("SELECT od.productCode, p.productName, od.quantityOrdered, od.priceEach, od.orderLineNumber FROM orderdetails od JOIN products p ON p.productCode = od.productCode WHERE od.orderNumber=? ORDER BY od.orderLineNumber LOCK IN SHARE MODE;");
+            pstmt.setInt(1, orderNumber);
 
-            ResultSet rs2 = ordetails.executeQuery();
+            rs = pstmt.executeQuery();
             float totalPrice = 0;
 
-            while(rs2.next()){
-                productCode         = rs2.getString("productCode");
-                productName         = rs2.getString("productName");
-                quantityOrdered     = rs2.getInt("quantityOrdered");
-                priceEach           = rs2.getFloat("priceEach");
-                lineNum             = rs2.getInt("orderLineNumber");
+            while(rs.next()){
+                productCode         = rs.getString("productCode");
+                productName         = rs.getString("productName");
+                quantityOrdered     = rs.getInt("quantityOrdered");
+                priceEach           = rs.getFloat("priceEach");
+                lineNum             = rs.getInt("orderLineNumber");
 
                 System.out.println("[ LINE #" + lineNum + " ]");
                 System.out.println("Product Code:      " + productCode);
@@ -229,6 +229,7 @@ public class products {
                 totalPrice += (quantityOrdered*priceEach);
                 System.out.println("----------------------------------------");
             }
+            rs.close();
 
             System.out.println("Order Total Price: " + totalPrice);
 
