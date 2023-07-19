@@ -301,7 +301,7 @@ public class products {
                 pstmt.executeUpdate();
 
                 //ADDS THE QUANTITY ORDERED BACK TO QUANTITY IN STOCK//
-                pstmt = conn.prepareStatement("SELECT (p.quantityInStock + od.quantityOrdered) AS newQty, p.productCode FROM products p JOIN orderdetails od ON od.productCode = p.productCode WHERE od.orderNumber=? LOCK IN SHARE MODE;");
+                pstmt = conn.prepareStatement("SELECT (p.quantityInStock + od.quantityOrdered) AS newQty, p.productCode FROM products p JOIN orderdetails od ON od.productCode = p.productCode WHERE od.orderNumber=? FOR UPDATE;");
                 pstmt.setInt(1, orderNumber);
 
                 rs = pstmt.executeQuery();
@@ -322,7 +322,6 @@ public class products {
                 }
 
                 System.out.println("Order Number " + orderNumber + " has successfully been cancelled.");
-
             }
             else{
                 System.out.println("You cannot cancel an order that has already been shipped.");
