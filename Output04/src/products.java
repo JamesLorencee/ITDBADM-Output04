@@ -7,13 +7,18 @@ public class products {
     public String   requiredDate;
 
     // Orders Table
-    public int   orderNumber;
+    public int      orderNumber;
     public String   orderDate;
     public String   shippedDate;
     public String   status;
     public String   comments;
     
+    // Order Details Table
+    public int      quantityOrdered;
+    public float    priceEach;
+    public int      lineNum;
 
+    // Products Table
     public String   productCode;
     public String   productName;
     public String   productLine;
@@ -21,19 +26,26 @@ public class products {
     public float    buyPrice;
     public float    MSRP;
     
-  
-    public products() {}
+    //a. Create an Order (Ordering for Products) -- SKELETON CODE --
+    public int orderProduct() { 
+        try {
+            return 1; 
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return 0;
+        }
+    }
     
     //b. Inquire for Products
-    public int getInfo()     {
+    public int getProductInfo()     {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter Product Code:");
+        System.out.print("Enter Product Code: ");
         productCode = sc.nextLine();
         
         try {
             Connection conn; 
             // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
             
@@ -78,18 +90,19 @@ public class products {
         }
     }
 
+    /*
     // Not Needed
     public int updateInfo() {
         
         float   incr;
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter Product Code:");
+        System.out.print("Enter Product Code: ");
         productCode = sc.nextLine();
         
         try {
             Connection conn; 
             // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
             PreparedStatement pstmt = conn.prepareStatement("SELECT productName, productLine, quantityInStock, buyPrice, MSRP FROM products WHERE productCode=? FOR UPDATE");
@@ -140,24 +153,26 @@ public class products {
             return 0;
         }        
     }
+    */
 
-    // c. Retrieve Info about the Order --- SKELETON CODE ---
+    // c. Retrieve Info about the Order
     public int retrieveOrderInfo() {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter Order Number:");
+        System.out.print("Enter Order Number: ");
         orderNumber = sc.nextInt();
 
         try{
             Connection conn; 
             // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
 
-            PreparedStatement pstmt = conn.prepareStatement("SELECT orderNumber, orderDate, requiredDate, shippedDate, status, comments, customerNumber FROM orders WHERE orderNumber=?");
+            PreparedStatement pstmt = conn.prepareStatement("SELECT orderNumber, orderDate, requiredDate, shippedDate, status, comments, customerNumber FROM orders WHERE orderNumber=? LOCK IN SHARE MODE");
             pstmt.setInt(1, orderNumber);
 
             System.out.println("Press enter key to start retrieving Order Details");
+            sc.nextLine();
             sc.nextLine();
             
             ResultSet rs = pstmt.executeQuery();
@@ -173,14 +188,51 @@ public class products {
             }
             rs.close();
 
-            System.out.println("Order Date:            " + orderDate);
-            System.out.println("Required Date:         " + requiredDate);
-            System.out.println("Shipped Date:          " + orderDate); 
-            System.out.println("Status:                " + status);
-            System.out.println("Comments:              " + comments);
-            System.out.println("Customer Number:       " + customerNumber); 
+            System.out.println("Order Date:       " + orderDate);
+            System.out.println("Required Date:    " + requiredDate);
 
-            System.out.println("Press enter key to end transaction");
+            if (shippedDate != null){
+            System.out.println("Shipped Date:     " + shippedDate); 
+            }else{
+            System.out.println("Shipped Date:     N/A"); 
+            }
+
+            System.out.println("Status:           " + status);
+
+            if (comments != null){
+            System.out.println("Comments:         " + comments);
+            }else{
+            System.out.println("Comments:         N/A");
+            }
+
+            System.out.println("Customer Number:  " + customerNumber); 
+            System.out.println("----------------------------------------");
+
+            PreparedStatement ordetails = conn.prepareStatement("SELECT od.productCode, p.productName, od.quantityOrdered, od.priceEach, od.orderLineNumber FROM orderdetails od JOIN products p ON p.productCode = od.productCode WHERE od.orderNumber=? ORDER BY od.orderLineNumber LOCK IN SHARE MODE;");
+            ordetails.setInt(1, orderNumber);
+
+            ResultSet rs2 = ordetails.executeQuery();
+            float totalPrice = 0;
+
+            while(rs2.next()){
+                productCode         = rs2.getString("productCode");
+                productName         = rs2.getString("productName");
+                quantityOrdered     = rs2.getInt("quantityOrdered");
+                priceEach           = rs2.getFloat("priceEach");
+                lineNum             = rs2.getInt("orderLineNumber");
+
+                System.out.println("[ LINE #" + lineNum + " ]");
+                System.out.println("Product Code:      " + productCode);
+                System.out.println("Product Name:      " + productName);
+                System.out.println("Quantity Ordered:  " + quantityOrdered);
+                System.out.println("Price Each:        " + priceEach);
+                totalPrice += (quantityOrdered*priceEach);
+                System.out.println("----------------------------------------");
+            }
+
+            System.out.println("Order Total Price: " + totalPrice);
+
+            System.out.println("\nPress enter key to end transaction");
             sc.nextLine();
 
             pstmt.close();
@@ -193,19 +245,19 @@ public class products {
         }
      }
 
-    //d. Cancel order --- SKELETON CODE --- 
+    //d. Cancel order
     public int cancelOrder(){
         ArrayList newQuantity = new ArrayList<>();
         ArrayList productcodes = new ArrayList<String>();
 
         Scanner sc = new Scanner(System.in);
-        System.out.println("Enter Order ID:");
+        System.out.print("Enter Order ID: ");
         orderNumber = sc.nextInt();
 
         try {
             Connection conn;
             //CHANGE YOUR PASSWORD//
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=password");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
 
@@ -213,6 +265,7 @@ public class products {
             pstmt.setInt(1, orderNumber);
 
             System.out.println("Press enter key to start retrieving the data");
+            sc.nextLine();
             sc.nextLine();
 
             ResultSet rs = pstmt.executeQuery();
@@ -247,7 +300,7 @@ public class products {
                 pstmt.executeUpdate();
 
                 //ADDS THE QUANTITY ORDERED BACK TO QUANTITY IN STOCK//
-                pstmt = conn.prepareStatement("SELECT (p.quantityInStock + od.quantityOrdered) AS newQty, p.productCode FROM products p JOIN orderdetails od ON od.productCode = p.productCode WHERE od.orderNumber=?;");
+                pstmt = conn.prepareStatement("SELECT (p.quantityInStock + od.quantityOrdered) AS newQty, p.productCode FROM products p JOIN orderdetails od ON od.productCode = p.productCode WHERE od.orderNumber=? LOCK IN SHARE MODE;");
                 pstmt.setInt(1, orderNumber);
 
                 rs = pstmt.executeQuery();
@@ -284,23 +337,38 @@ public class products {
                 return 0;
         }
     }
-
     
     public static void main (String args[]) {
         Scanner sc     = new Scanner (System.in);
         int     choice = 0;
         products p = new products();
          while(choice!=5){
-            System.out.println("Enter [1] Get product Info  [2] Update Product [3] Retrieve Info  [4] Cancel Order [5] Exit");
+            System.out.println("Enter [1] Create an Order [2] Inquire for Products [3] Retrieve Info about Order [4] Cancel Order [5] Exit");
+            System.out.print("Input: ");
             choice = sc.nextInt();
-            if (choice==1) p.getInfo();
-            if (choice==2) p.updateInfo();
-            // if (choice==3) p.retrieveInfo();
-            if (choice==4) p.cancelOrder();
+            
+            switch (choice){
+                case 1:
+                    //p.orderProduct();
+                    break;
+                case 2:
+                    p.getProductInfo();
+                    break;
+                case 3:
+                    p.retrieveOrderInfo();
+                    break;
+                case 4:
+                    p.cancelOrder();
+                    break;
+                case 5:
+                    System.out.println("Thank you!");
+                    break;
+                default:
+                    System.out.println("Invalid input. Try again.");
+                    break;
+            }
         }
         
-        
-        System.out.println("Press enter key to continue....");
         sc.nextLine();
     }
     
