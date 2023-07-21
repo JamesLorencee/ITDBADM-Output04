@@ -250,6 +250,9 @@ public class products {
     public int cancelOrder(){
         ArrayList newQuantity = new ArrayList<>();
         ArrayList productcodes = new ArrayList<String>();
+        ArrayList qtyOrdered = new ArrayList<>();
+        ArrayList prices = new ArrayList<>();
+        ArrayList orderLineNums = new ArrayList <>();
 
         Scanner sc = new Scanner(System.in);
         System.out.print("Enter Order ID: ");
@@ -258,7 +261,7 @@ public class products {
         try {
             Connection conn;
             //CHANGE YOUR PASSWORD//
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=password");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
 
@@ -281,6 +284,7 @@ public class products {
             }
             rs.close();
 
+            System.out.println("[ORDER INFO]");
             System.out.println("Order Date:       " + orderDate);
             System.out.println("Required Date:    " + requiredDate);
             System.out.println("Shipped Date:     " + shippedDate);
@@ -288,6 +292,31 @@ public class products {
             System.out.println("Comments:         " + comments);
             System.out.println("Customer Number:  " + customerNumber);
 
+            System.out.println("========================================");
+
+            PreparedStatement pstmt2 = conn.prepareStatement("SELECT orderNumber, productCode, quantityOrdered, priceEach, orderLineNumber FROM orderdetails WHERE orderNumber=?");
+            pstmt2.setInt(1, orderNumber);
+            ResultSet rs2 = pstmt2.executeQuery();
+
+            while (rs2.next()) {
+                productcodes.add(rs2.getString("productCode")); 
+                qtyOrdered.add(rs2.getInt("quantityOrdered")); 
+                prices.add(rs2.getInt("priceEach"));  
+                orderLineNums.add(rs2.getInt("orderLineNumber"));
+            }
+            rs2.close();
+
+            System.out.println("[ORDER DETAILS INFO]");
+            
+            System.out.println("Order Number:       " + orderNumber);
+            for(var i=0; i<productcodes.size(); i++) {
+                System.out.println("Quantity Ordered:       " + productcodes.get(i)); 
+                System.out.println("Quantity Ordered:       " + qtyOrdered.get(i)); 
+                System.out.println("Price Each:             " + prices.get(i)); 
+                System.out.println("Order Line Number:      " + orderLineNums.get(i)); 
+                 System.out.println("-------------------");
+            }
+            
             System.out.println("Press any key to cancel");
             sc.nextLine();
 
