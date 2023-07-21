@@ -325,7 +325,7 @@ public class products {
             // 1. Shipped - An order already shipped cannot be canceled. (Source: https://feedvisor.com/university/canceling-orders/)
             String str = "Shipped";
             if(!status.equals(str)){
-                pstmt = conn.prepareStatement("UPDATE orders SET status = 'Cancelled' WHERE orderNumber=? AND status IN ('Disputed', 'In Process', 'On Hold', 'Resolved');");
+                pstmt = conn.prepareStatement("UPDATE orders SET status = 'Cancelled', shippedDate = NULL WHERE orderNumber=? AND status IN ('Disputed', 'In Process', 'On Hold', 'Resolved');");
                 pstmt.setInt(1, orderNumber);
                 pstmt.executeUpdate();
 
