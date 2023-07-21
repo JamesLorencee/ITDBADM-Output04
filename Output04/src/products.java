@@ -1,4 +1,6 @@
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class products {
@@ -28,7 +30,133 @@ public class products {
     
     //a. Create an Order (Ordering for Products) -- SKELETON CODE --
     public int orderProduct() { 
+        int isOrdering = 1;
+        int confirm = 2; //dummy value
+        int lineNum = 0;
+
+        LocalDateTime currentDate = LocalDateTime.now();
+        String orderDate = currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        ArrayList productCodes = new ArrayList<String>();
+        ArrayList productNames = new ArrayList<String>();
+        ArrayList quantities = new ArrayList<Integer>();
+        ArrayList pricesEach = new ArrayList<Float>();
+        
+        Scanner sc = new Scanner(System.in);
+        
+        // i. Enter Customer Number
+        System.out.print("Enter Customer Number: ");
+        customerNumber = sc.nextInt();
+        sc.nextLine();
+        
+        // ii. Enter Required Date
+        System.out.print("Enter Required Date (in yyyy-mm-dd format): ");
+        requiredDate = sc.nextLine();
+
         try {
+            Connection conn; 
+            // Change password every PULL !!
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
+            System.out.println("Connection Successful");
+            conn.setAutoCommit(false);
+
+            //iii. Automtically Generates Order Number
+            PreparedStatement pstmt = conn.prepareStatement("SELECT MAX(orderNumber) + 1 AS newOrderNumber FROM orders LOCK IN SHARE MODE");
+            ResultSet rs = pstmt.executeQuery();  
+            rs.next();
+            orderNumber = rs.getInt("newOrderNumber");
+            
+            while (isOrdering == 1){
+                // iv. Enter Product Code
+                System.out.print("Enter Product Code: ");
+                productCode = sc.nextLine();
+                productCodes.add(productCode);	
+                
+                // v. Enter the quantity of the product
+                System.out.print("Enter Quantity: ");
+                quantityOrdered = sc.nextInt();
+                quantities.add(quantityOrdered);	
+                sc.nextLine();
+
+                // System.out.print("Enter Price Each: "); //take from db?
+                pstmt = conn.prepareStatement("SELECT productName, MSRP FROM products WHERE productCode=? FOR UPDATE");
+                pstmt.setString(1, productCode);
+            
+                rs = pstmt.executeQuery();
+                while(rs.next()) {
+                    productNames.add(rs.getString("productName"));
+                    pricesEach.add(rs.getFloat("MSRP"));
+                }
+                rs.close();
+
+                System.out.println("Price of " + productCodes.get(productCodes.size()-1) + ": " + pricesEach.get(pricesEach.size()-1));
+        
+                System.out.println("Do you want to order another product? Enter [1] if YES [0] if NO");
+                System.out.print("Input: ");
+                isOrdering = sc.nextInt();  
+                sc.nextLine();
+            } //end of while
+
+            // Confirm order //
+            System.out.println("Here is a summary of your order: ");
+            System.out.println("----------------------------------------");
+
+            for (int i = 0; i < productCodes.size(); i++){
+                System.out.println("ORDER ITEM #" + (i+1));
+                System.out.println("Product Code:       " + productCodes.get(i));
+                System.out.println("Product Name:       " + productNames.get(i));
+                System.out.println("Price Each (MSRP):  " + pricesEach.get(i));
+                System.out.println("----------------------------------------");
+            }
+
+            while (confirm != 1 && confirm != 0){
+                System.out.println("Please confirm your order. Enter [1] for CONFIRM [0] for VOID");
+                System.out.print("Input: ");
+                confirm = sc.nextInt();
+                sc.nextLine();
+                
+                if (confirm == 1){
+                    
+                // Add order to database //
+                pstmt = conn.prepareStatement("INSERT INTO orders (orderNumber, orderDate, requiredDate, shippedDate, status, comments, customerNumber) VALUES(?, ?, ?, NULL, 'In Process', NULL, ?)");
+                pstmt.setInt(1, orderNumber);
+                pstmt.setString(2, orderDate);
+                pstmt.setString(3, requiredDate);
+                pstmt.setInt(4, customerNumber);
+                pstmt.executeUpdate();
+
+                // Add orderDetails to database //
+                for (int i = 0; i < productCodes.size(); i++){
+                    lineNum = i+1;
+                    pstmt = conn.prepareStatement("INSERT INTO orderdetails (orderNumber, productCode, quantityOrdered, priceEach, orderLineNumber) VALUES(?, ?, ?, ?, ?)");
+                    pstmt.setInt(1, orderNumber);
+                    pstmt.setString(2, (String) productCodes.get(i));
+                    pstmt.setInt(3, (Integer) quantities.get(i));
+                    pstmt.setFloat(4, (Float) pricesEach.get(i));
+                    pstmt.setInt(5, lineNum);
+                    pstmt.executeUpdate();
+                }
+
+                // Update product quantity //
+                for (int i = 0; i < productCodes.size(); i++){
+                    pstmt = conn.prepareStatement("UPDATE products SET quantityInStock=(quantityInStock-?) WHERE productCode=?");
+                    pstmt.setInt(1, (Integer) quantities.get(i)); 
+                    pstmt.setString(2, (String) productCodes.get(i));
+                    pstmt.executeUpdate();
+                }
+
+                System.out.println("Order confirmed and placed.");
+                } else if (confirm == 0) {
+                    System.out.println("Current order voided.");
+                } else {
+                    System.out.println("Invalid input. Try again.");
+                }
+                rs.close();
+            }
+                
+            pstmt.close();
+            conn.commit();
+            conn.close();
             return 1; 
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -368,17 +496,19 @@ public class products {
     }
     
     public static void main (String args[]) {
-        Scanner sc     = new Scanner (System.in);
-        int     choice = 0;
-        products p = new products();
-         while(choice!=5){
+        Scanner  sc     = new Scanner (System.in);
+        int      choice = 0;
+        products p      = new products();
+        
+        while(choice!=5){
             System.out.println("Enter [1] Create an Order [2] Inquire for Products [3] Retrieve Info about Order [4] Cancel Order [5] Exit");
             System.out.print("Input: ");
             choice = sc.nextInt();
-            
+            sc.nextLine();
+
             switch (choice){
                 case 1:
-                    //p.orderProduct();
+                    p.orderProduct();
                     break;
                 case 2:
                     p.getProductInfo();
@@ -397,8 +527,6 @@ public class products {
                     break;
             }
         }
-        
-        sc.nextLine();
     }
     
 }
