@@ -400,8 +400,10 @@ public class products {
             // 1. Shipped - An order already shipped cannot be canceled. (Source: https://feedvisor.com/university/canceling-orders/)
             // 2. Resolved - An order is already shipped and meets the terms of customer.
             // 3. Cancelled - An order is already cancelled to begin with.
-            String str = "Shipped";
-            if(!status.equals(str)){
+            String str1 = "Shipped";
+            String str2 = "Resolved";
+            String str3 = "Cancelled";
+            if((!status.equals(str1)) || (!status.equals(str2)) || (!status.equals(str3))){
                 pstmt = conn.prepareStatement("UPDATE orders SET status = 'Cancelled', shippedDate = NULL WHERE orderNumber=? AND status IN ('Disputed', 'In Process', 'On Hold');");
                 pstmt.setInt(1, orderNumber);
                 pstmt.executeUpdate();
@@ -430,7 +432,7 @@ public class products {
                 System.out.println("Order Number " + orderNumber + " has successfully been cancelled.");
             }
             else{
-                System.out.println("You cannot cancel an order that has already been shipped.");
+                System.out.println("You cannot cancel an order that has already been shipped, resolved, or already cancelled.");
             }
             System.out.print("\nPress enter to end transaction");
             sc.nextLine();
