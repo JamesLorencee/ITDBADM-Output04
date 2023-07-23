@@ -3,6 +3,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import com.mysql.cj.protocol.Resultset;
+
 public class products {
    
     public int      customerNumber;
@@ -56,33 +58,36 @@ public class products {
         try {
             Connection conn; 
             // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
+            System.out.println("Press any key to start ordering");
+            sc.nextLine();
 
-            //iii. Automtically Generates Order Number
-            PreparedStatement pstmt = conn.prepareStatement("SELECT MAX(orderNumber) + 1 AS newOrderNumber FROM orders LOCK IN SHARE MODE");
-            ResultSet rs = pstmt.executeQuery();  
-            rs.next();
-            orderNumber = rs.getInt("newOrderNumber");
-            
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+
             while (isOrdering == 1){
                 // iv. Enter Product Code
                 System.out.print("Enter Product Code: ");
                 productCode = sc.nextLine();
                 productCodes.add(productCode);	
                 
+                // System.out.print("Enter Price Each: "); //take from db?
+                pstmt = conn.prepareStatement("SELECT productName, MSRP FROM products WHERE productCode=? FOR UPDATE");
+                pstmt.setString(1, productCode);
+                rs = pstmt.executeQuery();
+                
+                System.out.println("Press any key to continue");
+                sc.nextLine();
+
                 // v. Enter the quantity of the product
                 System.out.print("Enter Quantity: ");
                 quantityOrdered = sc.nextInt();
                 quantities.add(quantityOrdered);	
                 sc.nextLine();
-
-                // System.out.print("Enter Price Each: "); //take from db?
-                pstmt = conn.prepareStatement("SELECT productName, MSRP FROM products WHERE productCode=? FOR UPDATE");
-                pstmt.setString(1, productCode);
             
-                rs = pstmt.executeQuery();
+                
                 while(rs.next()) {
                     productNames.add(rs.getString("productName"));
                     pricesEach.add(rs.getFloat("MSRP"));
@@ -108,7 +113,7 @@ public class products {
                 System.out.println("Price Each (MSRP):  " + pricesEach.get(i));
                 System.out.println("----------------------------------------");
             }
-
+            
             while (confirm != 1 && confirm != 0){
                 System.out.println("Please confirm your order. Enter [1] for CONFIRM [0] for VOID");
                 System.out.print("Input: ");
@@ -116,7 +121,12 @@ public class products {
                 sc.nextLine();
                 
                 if (confirm == 1){
-                    
+                 //iii. Automtically Generates Order Number
+                pstmt = conn.prepareStatement("SELECT MAX(orderNumber) + 1 AS newOrderNumber FROM orders");
+                rs = pstmt.executeQuery();  
+                rs.next();
+                orderNumber = rs.getInt("newOrderNumber");   
+								
                 // Add order to database //
                 pstmt = conn.prepareStatement("INSERT INTO orders (orderNumber, orderDate, requiredDate, shippedDate, status, comments, customerNumber) VALUES(?, ?, ?, NULL, 'In Process', NULL, ?)");
                 pstmt.setInt(1, orderNumber);
@@ -152,7 +162,11 @@ public class products {
                     System.out.println("Invalid input. Try again.");
                 }
                 rs.close();
+                
             }
+
+						System.out.println("Press any key to end transaction");
+            sc.nextLine();
                 
             pstmt.close();
             conn.commit();
@@ -173,7 +187,7 @@ public class products {
         try {
             Connection conn; 
             // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
             
@@ -218,71 +232,6 @@ public class products {
         }
     }
 
-    /*
-    // Not Needed
-    public int updateInfo() {
-        
-        float   incr;
-        Scanner sc = new Scanner(System.in);
-        System.out.print("Enter Product Code: ");
-        productCode = sc.nextLine();
-        
-        try {
-            Connection conn; 
-            // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
-            System.out.println("Connection Successful");
-            conn.setAutoCommit(false);
-            PreparedStatement pstmt = conn.prepareStatement("SELECT productName, productLine, quantityInStock, buyPrice, MSRP FROM products WHERE productCode=? FOR UPDATE");
-            pstmt.setString(1, productCode);
-            
-            System.out.println("Press enter key to start retrieving the data");
-            sc.nextLine();
-            
-            ResultSet rs = pstmt.executeQuery();   
-            
-            while (rs.next()) {
-                productName     = rs.getString("productName");
-                productLine     = rs.getString("productLine");
-                quantityInStock = rs.getInt("quantityInStock");
-                buyPrice        = rs.getFloat("buyPrice");
-                MSRP            = rs.getFloat("MSRP");
-            }
-            
-            rs.close();
-            
-            System.out.println("Product Name: " + productName);
-            System.out.println("Product Line: " + productLine);
-            System.out.println("Quantity:     " + quantityInStock);
-            System.out.println("Buy Price:    " + buyPrice);
-            System.out.println("MSRP:         " + MSRP);
-            
-            System.out.println("Press enter key to enter new values for product");
-            sc.nextLine();
-
-            System.out.println("Enter percent increase in MSRP: ");
-            incr = sc.nextFloat();
-            
-            MSRP = MSRP * (1+incr/100);
-            
-            pstmt = conn.prepareStatement ("UPDATE products SET MSRP=? WHERE productCode=?");
-            pstmt.setFloat(1,  MSRP);
-            pstmt.setString(2, productCode);
-            pstmt.executeUpdate();
-                        
-            
-            pstmt.close();
-            conn.commit();
-            conn.close();
-            return 1;
-            
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return 0;
-        }        
-    }
-    */
-
     // c. Retrieve Info about the Order
     public int retrieveOrderInfo() {
         Scanner sc = new Scanner(System.in);
@@ -292,7 +241,7 @@ public class products {
         try{
             Connection conn; 
             // Change password every PULL !!
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=ccapdev123");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
 
@@ -389,7 +338,7 @@ public class products {
         try {
             Connection conn;
             //CHANGE YOUR PASSWORD//
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=password");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
 
@@ -483,6 +432,8 @@ public class products {
             else{
                 System.out.println("You cannot cancel an order that has already been shipped.");
             }
+            System.out.print("\nPress enter to end transaction");
+            sc.nextLine();
 
             pstmt.close();
             conn.commit();
