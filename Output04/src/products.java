@@ -403,7 +403,7 @@ public class products {
             String str1 = "Shipped";
             String str2 = "Resolved";
             String str3 = "Cancelled";
-            if((!status.equals(str1)) || (!status.equals(str2)) || (!status.equals(str3))){
+            if((!status.equals(str1)) && (!status.equals(str2)) && (!status.equals(str3))){
                 pstmt = conn.prepareStatement("UPDATE orders SET status = 'Cancelled', shippedDate = NULL WHERE orderNumber=? AND status IN ('Disputed', 'In Process', 'On Hold');");
                 pstmt.setInt(1, orderNumber);
                 pstmt.executeUpdate();
