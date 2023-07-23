@@ -61,9 +61,7 @@ public class products {
             conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbsales?useTimezone=true&serverTimezone=UTC&user=root&password=12345");
             System.out.println("Connection Successful");
             conn.setAutoCommit(false);
-            System.out.println("Press any key to start ordering");
-            sc.nextLine();
-
+            
             PreparedStatement pstmt = null;
             ResultSet rs = null;
 
@@ -77,7 +75,7 @@ public class products {
                 pstmt = conn.prepareStatement("SELECT productName, MSRP FROM products WHERE productCode=? FOR UPDATE");
                 pstmt.setString(1, productCode);
                 rs = pstmt.executeQuery();
-                
+
                 System.out.println("Press any key to continue");
                 sc.nextLine();
 
